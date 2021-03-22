@@ -1,0 +1,170 @@
+server:
+    port: 18088
+    servlet:
+        context-path: /qeubee-news-web # 微服务合并项目后没有网关，为了保证前端路径不变，加上前缀
+
+spring:
+    application:
+        name: qeubee-news-web
+        constants:
+            names:
+                gateway-exchange-name: cdh.realtime.gateway.qbpro.notification.fanout
+                gateway-exchange-news: wf.realtime.qeubee.news.front.send.exchange
+        subscription:
+            enable: true
+
+    main:
+        allow-bean-definition-overriding: true
+
+    rabbitmq:
+        #        host: rabbitmq-cdh.qa.sumscope.com
+        host: 172.16.73.62
+        port: 5672
+        password: 1
+        username: mqt
+
+    redis:
+        host: localhost
+        timeout: 5000
+
+    datasource:
+        urlParm: useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&useSSL=false&rewriteBatchedStatements=true&zeroDateTimeBehavior=CONVERT_TO_NULL
+        druid:
+            driver-class-name: com.mysql.cj.jdbc.Driver
+            # allowMultiQueries=true 用于执行多语句
+            url: jdbc:mysql://mozi-vm.sumscope.com:3306/wf_news_qa01?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&useSSL=false
+            username: wbfast_qa_write
+            password: wbfast_qa_write
+#            url: jdbc:mysql://localhost:3306/wf_news_qa01?${spring.datasource.urlParm}
+#            username: root
+#            password: 123456
+            # 配置wall 会导致多条语句无法使用，如果需要，需另行自定义配置
+            filters: stat
+            # 一个方法使用多条sql
+            filter:
+                wall:
+                    config:
+                        multi-statement-allow: true
+            initial-size: 3
+            min-idle: 1
+            max-active: 20
+            test-on-borrow: false
+            test-on-return: false
+            test-while-idle: true
+            validation-query: select 'x'
+            max-wait: 3000
+            pool-prepared-statements: true
+            time-between-eviction-runs-millis: 60000
+            min-evictable-idle-time-millis: 60000
+            web-stat-filter:
+                enabled: true
+                url-pattern: "/*"
+            stat-view-servlet:
+                enabled: true
+                url-pattern: /druid/*
+                reset-enable: false
+                login-username: admin
+                login-password: admin
+                allow:
+
+            mozi:
+                driver-class-name: com.mysql.cj.jdbc.Driver
+                url: jdbc:mysql://mozi-vm.sumscope.com:3306/db_cls?${spring.datasource.urlParm}
+                username: wbfast_qa_write
+                password: wbfast_qa_write
+            eform:
+                driver-class-name: com.mysql.cj.jdbc.Driver
+                url: jdbc:mysql://172.16.8.86:3306/eform?${spring.datasource.urlParm}
+                username: artogrid
+                password: artogrid
+
+#**************************** actuator监控 ***************************
+management:
+    #  server:
+    #    # 设置监控服务端口,如果没写默认就是服务器的端口
+    #    port: 8081
+    endpoints:
+        # 设置端点是否可用 默认只有shutdown可用
+        enabled-by-default: true
+        web:
+            # 设置是否暴露端点 默认只有health和info可见
+            exposure:
+                # 包括所有端点
+                include: "*" # 注意需要添加引号
+                # 排除端点
+                exclude: shutdown
+    endpoint:
+        health:
+            show-details: always
+        #可以关闭指定的端点
+        shutdown:
+            enabled: false
+
+
+# 采用了多数据源的模式，此处的配置是没用的
+#**************************** mybatis-plus ***************************
+mybatis-plus:
+    mapper-locations: classpath:mapping/*.xml
+    type-aliases-package: com.pats.qeubeenewsweb.entity
+    configuration:
+        call-setters-on-nulls: true
+        log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+        cache-enabled: true
+        map-underscore-to-camel-case: true
+    global-config:
+        db-config:
+            id-type: auto
+
+
+#**************************** logging ***************************
+logging:
+    file:
+        path: ./log
+        max-size: 10M
+    level:
+        root: INFO
+    config: classpath:log/logback-spring.xml
+
+
+#**************************** rabbit ***************************
+rabbit:
+    qeubee:
+        exchange:
+            poExchange: qb.d133.hongan_article_stock_relation.table.change.fanout  # 舆情新闻数据源
+            newsTopicExchange: news.topic.exchange
+            gatewayNewsExchange: wf.realtime.qeubee.news.front.send.exchange
+            abnormalTradeRank: cdh.abnormal.trade.rank
+        queue:
+            poNewsQueue: qb.cls.pub.opinion.queue
+            labelBackQueue: news.labelBack.queue
+            labelQueue: news.label.queue
+            bulletinQueue: news.bulletin.queue
+            bulletinBondQueue: news.bulletin.bond.queue
+            frontQueue: news.front.queue
+            qbNewsAbnormalTradeRankQueue: qb.news.abnormal.trade.rank.queue
+        routingkey:
+            labelBackRoutingKey: label.back
+            labelRoutingKey: label
+            bulletinRoutingKey: bulletin
+            bulletinBondRoutingKey: bulletin.bond
+
+#**************************** QPID ***************************
+qpid:
+    url: amqp://guest:guest@clientid/test?failover='singlebroker'&brokerlist='tcp://qpid-cdh.qa.sumscope.com:5672?tcp_nodelay='true'&connecttimeout='2000''
+    queue:
+        spider_files: qb.d111.spider_files.table.change.fanout;{create:always,delete:never,node:{type:topic,x-declare:{type:fanout}}}
+        spider_files_bond: qb.d111.spider_files_bond.table.change.fanout;{create:always,delete:never,node:{type:topic,x-declare:{type:fanout}}}
+        qb_public_opinion: qb.common.hongan_article_news.change.fanout;{create:always,delete:never,node:{type:topic,x-declare:{type:fanout}}}
+
+#**************************** CDH请求地址 ***************************
+restfulapi:
+    cacheEnable: false
+    cdh: http://restfulapi-cdh.dev.sumscope.com:7777/api/runapi
+    # bond 查询剩余日期
+    bondRemainingDate: http://172.16.66.132:5061/getHistoryBondResidualMaturityByBondKeyAndListedMarket
+
+
+#**************************** 版本信息 ***************************
+info:
+    name: ${spring.application.name}
+    version: 2.0.0

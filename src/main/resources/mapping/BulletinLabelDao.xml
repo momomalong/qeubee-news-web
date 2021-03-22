@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.BulletinLabelDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.pats.qeubeenewsweb.entity.BulletinLabel">
+        <id column="id" property="id"/>
+        <result column="bulletin_id" property="bulletinId"/>
+        <result column="label_id" property="labelId"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        a.id, a.bulletin_id bulletinId, a.label_id labelId
+    </sql>
+    <select id="selectLableByBulletinIds" resultType="com.pats.qeubeenewsweb.entity.BulletinLabel">
+        select <include refid="Base_Column_List"/>, b.name `name`
+        from qb_news_bulletin_label a
+        left join qb_news_label b on a.label_id = b.id
+        where a.bulletin_id in (#{ids})
+    </select>
+
+</mapper>

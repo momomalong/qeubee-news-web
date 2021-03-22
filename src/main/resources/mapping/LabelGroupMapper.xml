@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.LabelGroupMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.pats.qeubeenewsweb.entity.LabelGroup">
+        <result column="nameId" property="nameId" />
+        <result column="name" property="name" />
+        <result column="classify" property="classify" />
+        <result column="scope" property="scope" />
+        <result column="tag" property="tag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <select id="findByLabelType" resultMap="BaseResultMap">
+        SELECT label_type.id        nameId
+             , label_type.name      name
+             , label_type.classify
+             , label_type.scope
+             , group_concat(concat_ws('_', label.name, label.id, label.classify) separator '|')  tag
+          FROM 
+               wf_news_qa01.qb_news_label_type label_type
+          left join 
+               wf_news_qa01.qb_news_label label
+            on label.type_id = label_type.id
+        <where>
+            <if test="nameId != null and nameId != 0">
+                label_type.id = #{nameId}
+            </if>
+            <if test="name != null and name != ''">
+                and label_type.name like '%${name}%'
+            </if>
+            <if test="labelName != null and labelName != ''">
+                and label.name like '%${labelName}%'
+            </if>
+            <if test="scope != null and scope != ''">
+                and label_type.scope = #{scope}
+            </if>
+            <if test="classify != null and classify != 0">
+                and label_type.classify = #{classify}
+            </if>
+            <if test="labelClassify != null and labelClassify != 0">
+                and label.classify = #{labelClassify}
+            </if>
+        </where>
+        group by type_id;
+    </select>
+
+</mapper>

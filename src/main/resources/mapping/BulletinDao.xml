@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.BulletinDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.pats.qeubeenewsweb.entity.Bulletin">
+        <result column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="title" property="title"/>
+        <result column="summary" property="summary"/>
+        <result column="content" property="content"/>
+        <result column="author" property="author"/>
+        <result column="source" property="source"/>
+        <result column="url" property="url"/>
+        <result column="refer_bond" property="referBond"/>
+        <result column="bond_code" property="bondCode"/>
+        <result column="bond_type" property="bondType"/>
+        <result column="bond_id" property="bondId"/>
+        <result column="main_body" property="mainBody"/>
+        <result column="mention_com" property="mentionCom"/>
+        <result column="attachment" property="attachment"/>
+        <result column="compliance" property="compliance"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time createTime,
+        update_time updateTime,
+        title, summary, content, author, `source`, url, attachment, compliance
+    </sql>
+
+    <select id="findByPage" resultType="com.pats.qeubeenewsweb.entity.bo.BulletinPageBO">
+        select a.id, a.title,a.create_time publishTime,a.create_time createTime,a.compliance
+        from qb_news_bulletin a
+        <if test="label != null and label.size() > 0">
+            left join qb_news_bulletin_label b on a.id = b.bulletin_id
+        </if>
+        where 1 = 1
+        <if test="keyword != null and keyword != ''">
+            and (a.title like '%${keyword}%')
+        </if>
+        <if test="compliance != null">
+            and a.compliance = #{compliance}
+        </if>
+        <if test="concernGroup != null and concernGroup.size() > 0">
+            and a.id in
+            <foreach collection="concernGroup" item="item" separator="," open="(" close=")">
+                ${item}
+            </foreach>
+        </if>
+        <if test="label != null and label.size() > 0">
+            and b.label_id in
+            <foreach collection="label" item="item" separator="," open="(" close=")">
+                ${item}
+            </foreach>
+            group by a.id
+        </if>
+    </select>
+</mapper>

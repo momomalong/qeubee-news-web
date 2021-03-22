@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.SpiderFileCategoryMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.pats.qeubeenewsweb.entity.SpiderFileCategory">
+        <id column="id" property="id" />
+        <result column="pid" property="pid" />
+        <result column="code" property="code" />
+        <result column="name" property="name" />
+        <result column="seq" property="seq" />
+        <result column="create_time" property="createTime" />
+        <result column="modify_time" property="modifyTime" />
+        <result column="delflag" property="delflag" />
+        <result column="rule" property="rule" />
+        <result column="weight" property="weight" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, pid, code, name, seq, create_time, modify_time, delflag, rule, weight
+    </sql>
+
+    <select id="findAllList" resultType="com.pats.qeubeenewsweb.entity.dto.SpiderFileCategoryDTO">
+        SELECT id,pid,`CODE`,`NAME`,'1' type FROM `spider_file_category` WHERE ( pid = '' OR pid IS NULL ) AND delflag = 0
+        UNION
+        SELECT id,pid,`CODE`,`NAME`,'2' type FROM `spider_file_category` WHERE pid IN
+            ( SELECT id FROM `spider_file_category` WHERE ( pid = '' OR pid IS NULL ) AND delflag = 0 ) AND delflag = 0
+        UNION
+        SELECT id,pid,`CODE`,`NAME`,'3' type FROM `spider_file_category` WHERE pid IN
+            (SELECT id FROM `spider_file_category` WHERE pid IN
+                ( SELECT id FROM `spider_file_category` WHERE ( pid = '' OR pid IS NULL ) AND delflag = 0 )
+            AND delflag = 0 )
+        AND delflag = 0
+    </select>
+</mapper>

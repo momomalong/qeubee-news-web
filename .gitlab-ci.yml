@@ -1,0 +1,63 @@
+image: maven:3.6.1-jdk-11
+
+variables:
+    MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+    MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end"
+    DOCKER_IMAGE_TO_SCAN: hello-webapp:latest
+
+# Cache the Maven repository so that each job does not have to download it.
+cache:
+    key: mavenrepo
+    paths:
+        - ./.m2/repository/
+
+stages:
+    - build
+    - release
+    - trigger_deploy_ci
+
+# PMD code quality analysis.
+pmd:
+    stage: build
+    script:
+        - 'mvn $MAVEN_CLI_OPTS -Pcicdprofile pmd:check'
+    except:
+        - tags
+
+# SpotBugs code quality analysis.
+spotbugs:
+    stage: build
+    script:
+        - 'mvn $MAVEN_CLI_OPTS -Pcicdprofile spotbugs:check'
+    except:
+        - tags
+
+gitlab-release:
+    stage: release
+    image:
+        name: docker-registry.jx.k8s.sumscope.com:80/tools/semantic-delivery-gitlab:9.1.0
+        entrypoint: [ "" ]
+    only:
+        - release/1.0
+    script:
+        - DEBUG=semantic-delivery-gitlab semantic-delivery-gitlab --token ${GITLAB_TOKEN}
+
+release-build:
+    stage: release
+    script:
+        - 'echo $CI_COMMIT_TAG'
+        # - 'mvn $MAVEN_CLI_OPTS compile jib:build "-DcurVersion=$CI_COMMIT_TAG"'
+        - 'mvn $MAVEN_CLI_OPTS compile jib:build "-DcurVersion=1.0.18"'
+    artifacts:
+        paths:
+            - target/qeubee-news-web-1.0.0-SNAPSHOT.jar
+
+#trigger_deploy_ci:
+#  stage: trigger_deploy_ci
+#  script:
+#    - export
+#    - curl --version
+#    - curl -vv -X POST -F token=$QB_DEPLOY_TOKEN -F ref=develop -F "variables[TAG]=$CI_COMMIT_TAG" http://registry.k8s.sumscope.com:10080/api/v4/projects/45/trigger/pipeline | tee res.json
+#  artifacts:
+#    paths:
+#      - res.json

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.HomeHotwordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="hotwordLabelMap" type="com.pats.qeubeenewsweb.entity.HomeHotword">
+        <id column="id" property="id" />
+        <result column="label_id" property="labelId" />
+        <result column="scope" property="scope" />
+        <result column="order_num" property="orderNum" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="type" property="type" />
+        <result column="name" property="labelName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, label_id, `scope`,order_num,`type`
+    </sql>
+
+    <select id="findAllWithLabelName" resultMap="hotwordLabelMap">
+        select hotword.id
+             , hotword.label_id
+             , hotword.scope
+             , hotword.order_num
+             , hotword.type
+             , hotword.create_time
+             , hotword.update_time
+             , label.name name
+          from qb_news_home_hotword hotword
+          left join
+               qb_news_label        label
+            on label.id = hotword.label_id
+        ${ew.customSqlSegment}
+    </select>
+
+    <update id="statisticsNewHotWords">
+        DELETE FROM qb_news_home_hotword;
+        SET @rownum1 = 21;
+        SET @rownum2 = 21;
+        INSERT INTO qb_news_home_hotword ( label_id, `scope`, order_num, create_time, update_time )
+        SELECT * FROM(
+            SELECT
+                a.label_id,
+                'bulletin' scope,
+                @rownum1 := @rownum1 - 1 AS order_num,
+                now() create_time,
+                now() update_time
+            FROM
+                ( SELECT t1.label_id label_id, COUNT( 1 ) count FROM `qb_news_bulletin_label` t1
+                inner join `qb_news_label` t2 on t1.label_id = t2.id and t2.classify = 2
+                WHERE DATEDIFF( (SELECT create_time FROM `qb_news_bulletin_label` t3 ORDER BY t3.create_time desc limit 1), t1.create_time ) &lt;= 1 GROUP BY t1.label_id ) a
+            ORDER BY a.count DESC LIMIT 20
+        ) c
+        UNION ALL
+        SELECT * FROM (
+            SELECT
+                b.label_id,
+                'news' scope,
+                @rownum2 := @rownum2 - 1 AS order_num,
+                now() create_time,
+                now() update_time
+            FROM
+                ( SELECT t1.label_id label_id, COUNT( 1 ) count FROM `qb_news_public_opinion_label` t1
+                inner join `qb_news_label` t2 on t1.label_id = t2.id and t2.classify = 2
+                WHERE DATEDIFF( (SELECT create_time FROM `qb_news_public_opinion_label` t3 ORDER BY t3.create_time desc limit 1), t1.create_time ) &lt;= 1
+                GROUP BY t1.label_id ) b
+        ORDER BY b.count DESC LIMIT 20
+        ) d;
+    </update>
+</mapper>

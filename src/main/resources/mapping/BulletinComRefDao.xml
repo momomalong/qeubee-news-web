@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.BulletinComRefDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.pats.qeubeenewsweb.entity.BulletinComRef">
+        <id column="id" property="id" />
+        <result column="bulletin_id" property="bulletinId" />
+        <result column="com_id" property="comId" />
+        <result column="name" property="name" />
+        <result column="icons" property="icons" />
+        <result column="levels" property="levels" />
+        <result column="nature" property="nature" />
+        <result column="liquidity" property="liquidity" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, bulletin_id, com_id, name, icons, levels, nature, liquidity
+    </sql>
+
+</mapper>

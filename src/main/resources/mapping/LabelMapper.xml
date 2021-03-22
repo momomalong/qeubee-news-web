@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.LabelMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.pats.qeubeenewsweb.entity.Label">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="type_id" property="typeId" />
+        <result column="scope" property="scope" />
+        <result column="classify" property="classify" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <resultMap id="LabelAndLabelTypeResultMap" type="com.pats.qeubeenewsweb.entity.dto.label.LabelAndLabelTypeDTO">
+        <id column="id" jdbcType="INTEGER" property="id" />
+        <result column="name" jdbcType="VARCHAR" property="name" />
+        <result column="scope" jdbcType="VARCHAR" property="scope" />
+        <result column="classify" jdbcType="INTEGER" property="classify"/>
+        <!--一对多，方式一-->
+        <collection property="labels" ofType="com.pats.qeubeenewsweb.entity.dto.label.LabelDetailDTO" >
+            <id column="aid" jdbcType="INTEGER" property="id" />
+            <result column="aname" jdbcType="VARCHAR" property="name" />
+            <result column="aclass" jdbcType="INTEGER" property="classify" />
+        </collection>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, name, type_id, scope, classify, create_time, update_time
+    </sql>
+
+    <select id="findBonds" resultType="com.pats.qeubeenewsweb.entity.dto.label.LabelBondsDTO">
+        SELECT
+                a.id id,
+                `name` shortName,
+                a.type_id typeId ,
+                c.bond_key bondKey,
+                c.listed_market listedMarket,
+                c.issuer_code issuerCode,
+                c.issuer_name issuerName
+        FROM
+                qb_news_label a,
+                qb_news_public_opinion_label b,
+                qb_news_label_bond_issuer_info c
+        WHERE
+                a.id = b.label_id
+          and a.id = c.label_id
+          AND a.type_id IN ( 62 )
+          AND b.public_opinion_id = #{id}
+    </select>
+
+    <select id="findRiskLabel" resultType="com.pats.qeubeenewsweb.entity.dto.label.LabelDTO">
+        select `name`,b.public_opinion_id id from qb_news_label a,qb_news_public_opinion_label b where a.id = b.label_id
+        and a.type_id not in (62,63,66,69) and a.classify = 2 and b.public_opinion_id in (${id})
+    </select>
+
+    <select id="findByScope" parameterType="String" resultMap="LabelAndLabelTypeResultMap">
+        select b.classify,b.id,b.name,b.scope,a.id aid,a.`name` aname,a.classify aclass from qb_news_label a,qb_news_label_type b
+        where a.type_id = b.id
+        <if test ="scope != null and ''!= scope">
+            and b.scope = #{scope}
+        </if>
+        <if test ="labelClassify != 0">
+            and a.classify = ${labelClassify}
+        </if>
+        <if test ="labelTypeClassify != 0">
+            and b.classify = ${labelTypeClassify}
+        </if>
+    </select>
+    <select id="findBondsInfo" resultType="com.pats.qeubeenewsweb.entity.dto.label.LabelBondsDTO">
+        SELECT
+                a.id id,
+                `name` shortName,
+                b.bond_key bondKey,
+                b.listed_market listedMarket,
+                b.issuer_code issuerCode,
+                b.issuer_name issuerName
+        FROM
+                `qb_news_label_bond_issuer_info` b
+                        INNER JOIN qb_news_label a ON a.id = b.label_id
+    </select>
+</mapper>

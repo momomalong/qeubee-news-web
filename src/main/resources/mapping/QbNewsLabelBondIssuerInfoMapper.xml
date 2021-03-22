@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.QbNewsLabelBondIssuerInfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.pats.qeubeenewsweb.entity.QbNewsLabelBondIssuerInfo">
+        <id column="id" property="id" />
+        <result column="label_id" property="labelId" />
+        <result column="bond_key" property="bondKey" />
+        <result column="listed_market" property="listedMarket" />
+        <result column="issuer_code" property="issuerCode" />
+        <result column="issuer_name" property="issuerName" />
+        <result column="issuer_province" property="issuerProvince" />
+        <result column="issuer_sector" property="issuerSector" />
+        <result column="issuer_subsector" property="issuerSubsector" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, label_id, bond_key, listed_market, issuer_code, issuer_name, issuer_province, issuer_sector, issuer_subsector, create_time, update_time
+    </sql>
+
+</mapper>

@@ -1,0 +1,38 @@
+package com.pats.qeubeenewsweb.entity.dto.hotword;
+
+import com.pats.qeubeenews.common.dto.SysBaseDTO;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+/**
+ * @author :qintai.ma
+ * @version :1.0.0
+ * @since :2020.08.19
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@ApiModel("删除总体热词类")
+@EqualsAndHashCode(callSuper = true)
+public class HotWordDeleteDTO extends SysBaseDTO {
+    private static final long serialVersionUID = 1L;
+    /**
+     * 热词id列表
+     */
+    @ApiModelProperty(value = "热词id列表", required = true)
+    private List<Integer> hotWords;
+
+    /**
+     * "标签所属范围
+     * 可选项：news: 舆情 bulletin：公告 null:全查"
+     */
+    @ApiModelProperty(value = "标签所属范围 可选项：news: 舆情 bulletin：公告 null:全查", required = true)
+    private String scope;
+
+}

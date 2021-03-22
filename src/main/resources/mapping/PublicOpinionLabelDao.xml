@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.PublicOpinionLabelDao">
+    <resultMap id="publicOpinionLabelResultMap" type="com.pats.qeubeenewsweb.entity.PublicOpinionLabel">
+        <id column="id" property="id"/>
+        <result column="public_opinion_id" property="publicOpinionId"/>
+        <result column="label_id" property="labelId"/>
+    </resultMap>
+
+    <select id="getByPublicOpinionId" resultMap="publicOpinionLabelResultMap">
+        SELECT
+            a.id,
+            a.public_opinion_id,
+            a.label_id
+        FROM
+            qb_news_public_opinion_label a
+            INNER JOIN qb_news_label b ON a.label_id = b.id
+        WHERE
+            public_opinion_id = #{publicOpinionId}
+            AND b.classify = 2
+            AND b.id NOT IN ( SELECT id FROM `qb_news_label` WHERE classify = 2 AND `name` LIKE '%有限公' )
+    </select>
+
+    <select id="getPublicOpinionId" resultType="java.lang.Integer">
+        select id from(
+        select null id
+        <if test="dto.label != null and dto.label.size() > 0">
+            union all
+            select distinct public_opinion_id id from qb_news_public_opinion_label where label_id in
+            <foreach collection="dto.label" separator="," item="item" open="(" close=")">
+                ${item}
+            </foreach>
+        </if>
+        <if test="dto.concernGroup != null and dto.concernGroup.size() > 0">
+            union all
+            select distinct * from (
+            SELECT id FROM `qb_news_public_opinion` where bond_key in
+            <foreach collection="dto.concernGroup" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+            union all
+            select public_opinion_id id from qb_news_public_opinion_label a where a.label_id in (select
+            b.label_id FROM qb_news_label_bond_issuer_info b where b.bond_key in
+            <foreach collection="dto.concernGroup" separator="," item="item" open="(" close="))">
+                #{item}
+            </foreach>
+            ) d
+        </if>
+        <if test="(dto.industry != null and dto.industry.size() > 0) or (dto.issuerProvince != null and dto.issuerProvince.size() > 0)">
+            union all
+            select DISTINCT public_opinion_id id from qb_news_public_opinion_label a where a.label_id in
+            (select
+            b.label_id FROM qb_news_label_bond_issuer_info b where 1=1
+            <if test="(dto.industry != null and dto.industry.size() > 0)">
+                and b.issuer_sector in
+                <foreach collection="dto.industry" separator="," item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="(dto.issuerProvince != null and dto.issuerProvince.size() > 0)">
+                and b.issuer_province in
+                <foreach collection="dto.issuerProvince" separator="," item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            )
+        </if>
+        ) c GROUP BY id having count(id) = ${count}
+    </select>
+
+
+    <select id="getByPOId" resultMap="publicOpinionLabelResultMap">
+        select id
+             , public_opinion_id
+             , label_id
+        from qb_news_public_opinion_label
+        where public_opinion_id in (${poid})
+    </select>
+</mapper>

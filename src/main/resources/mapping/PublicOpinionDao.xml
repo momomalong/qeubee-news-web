@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.PublicOpinionDao">
+    <resultMap id="publicOpinionResultMap" type="com.pats.qeubeenewsweb.entity.PublicOpinion">
+        <id column="id" property="id"/>
+        <result column="news_id" property="newsId"/>
+        <result column="title" property="title"/>
+        <result column="risk" property="risk"/>
+        <result column="source" property="source"/>
+        <result column="main_body" property="mainBody"/>
+        <result column="refer_bond" property="referBond"/>
+        <result column="bond_code" property="bondCode"/>
+        <result column="bond_type" property="bondType"/>
+        <result column="bond_id" property="bondId"/>
+        <result column="mention_com" property="mentionCom"/>
+        <result column="author" property="author"/>
+        <result column="compliance" property="compliance"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="article_score" property="articleScore"/>
+        <result column="issuer_code" property="issuerCode"/>
+        <result column="issuer_name" property="issuerName"/>
+        <result column="mention_com_short_name" property="mentionComShortName"/>
+        <result column="short_name" property="shortName"/>
+        <!--<collection property="labels" ofType="com.pats.qeubeenewsweb.entity.PublicOpinionLabel"
+                    column="{publicOpinionId=id}"
+                    select="com.pats.qeubeenewsweb.mapper.PublicOpinionLabelDao.getByPublicOpinionId">
+            <id column="id" property="id"/>
+            <result column="public_opinion_id" property="publicOpinionId"/>
+            <result column="label_id" property="labelId"/>
+        </collection>-->
+    </resultMap>
+
+    <sql id="selectTemplate">
+        select news.id
+             , news.news_id
+             , news.title
+             , news.risk
+             , news.source
+             , news.main_body
+             , news.refer_bond
+             , news.bond_code
+             , news.bond_type
+             , news.bond_id
+             , news.mention_com
+             , news.author
+             , news.compliance
+             , news.create_time
+             , news.update_time
+             , news.article_score
+             , news.issuer_code
+             , news.issuer_name
+             , news.mention_com_short_name
+             , news.short_name
+        from qb_news_public_opinion news
+                ${ew.customSqlSegment}
+    </sql>
+
+    <select id="getPublicOpinionPage" resultMap="publicOpinionResultMap">
+        <include refid="selectTemplate">
+        </include>
+    </select>
+
+    <select id="getPublicOpinionByQuery" resultMap="publicOpinionResultMap">
+        <include refid="selectTemplate">
+        </include>
+    </select>
+
+    <select id="selectLabelIdIsClassify" resultType="java.lang.Integer">
+        select id from qb_news_label where 1 = 1 and classify = 2
+        <if test="labelIds != null and labelIds.size() > 0">
+            and id in
+            <foreach collection="labelIds" item="item" separator="," open="(" close=")">
+                ${item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getPoOrder" resultType="java.util.Map">
+        SET
+        @rownumber = 0;
+        SELECT
+        @rownumber := @rownumber + 1 AS orderNum,
+        f.*
+        FROM (
+        SELECT
+        d.${column} `name`,
+        count(*) `count`
+        FROM
+            qb_news_public_opinion a
+            INNER JOIN qb_news_public_opinion_label b ON a.id = b.public_opinion_id
+            INNER JOIN qb_news_label c ON b.label_id = c.id
+            AND c.type_id = 62
+            INNER JOIN qb_news_label_bond_issuer_info d ON c.id = d.label_id
+        WHERE ${column} != ''
+        <if test="moodEnd != null and moodStart != null">
+            and (a.article_score &gt;= #{moodStart} and a.article_score &lt;= #{moodEnd})
+        </if>
+        AND DATEDIFF(
+        DATE_FORMAT( NOW()
+        , '%Y-%m-%d' )
+        , DATE_FORMAT( a.create_time
+        , '%Y-%m-%d' )) &lt;= ${day}
+
+        GROUP BY d.${column}
+        ) f
+        ORDER BY f.`count` desc LIMIT 10
+    </select>
+
+    <select id="getPoIssuerOrder" resultType="com.pats.qeubeenewsweb.entity.dto.publicopinion.PoIssuerRankDTO">
+        SET
+        @rownumber = 0;
+        SELECT @rownumber := @rownumber + 1 AS orderNum,
+        f.*
+        FROM
+        (
+        SELECT
+            d.issuer_code issuerCode,
+            d.issuer_name issuerName,
+            d.issuer_sector issuerSector,
+            AVG( article_score ) articleScore
+        FROM
+            qb_news_public_opinion a
+            INNER JOIN qb_news_public_opinion_label b ON a.id = b.public_opinion_id
+            INNER JOIN qb_news_label c ON b.label_id = c.id AND c.type_id = 62 and c.classify = 2
+            INNER JOIN qb_news_label_bond_issuer_info d ON c.id = d.label_id
+        WHERE
+        d.issuer_name != ''
+        AND DATEDIFF(
+        DATE_FORMAT( NOW(), '%Y-%m-%d' ),
+        DATE_FORMAT( a.create_time, '%Y-%m-%d' )) &lt;= ${day}
+        <if test="industry != null and industry.size() > 0">
+            and d.issuer_sector in
+            <foreach collection="industry"  item="i" open="(" close=")" separator=",">
+                #{i}
+            </foreach>
+        </if>
+        <if test="follow != null and follow.size() > 0">
+            and d.bond_key in
+            <foreach collection="follow" item="i" open="(" close=")" separator=",">
+                #{i}
+            </foreach>
+        </if>
+        GROUP BY
+            d.issuer_code,
+            d.issuer_name,
+            d.issuer_sector
+        ) f
+        ORDER BY
+            f.articleScore
+        <if test="order == 1">
+            DESC
+        </if>
+        <if test="order == 0">
+            ASC
+        </if>
+        LIMIT 10
+    </select>
+</mapper>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pats.qeubeenewsweb.mapper.QbNewsSpBulletinMapper">
+
+    <select id="getCateCode" resultType="com.pats.qeubeenewsweb.entity.dto.bulletin.BulletinCateCodeDTO">
+        select b.id id,b.bulletin_id bulletinId,s.cate_code cate_code from spider_files s,
+        (select id,bulletin_id from qb_news_sp_bulletin where cate_code2 is null) b where s.id = b.bulletin_id;
+    </select>
+</mapper>
